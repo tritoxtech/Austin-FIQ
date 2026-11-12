@@ -271,13 +271,18 @@ function analyze(raw,filename){
  }
  if(blocks.home){
   const b=blocks.home;
-  const allPerils=values(b,/\bAll perils[ \t]+\$\s*([\d,]+)/i);
-  add('Home QC','All perils deductible','Confirm $1,000 or $5,000',allPerils?dollars(money(allPerils[1])):null,null);
-  const pkg=values(b,/^(?:(?:Coverage|Policy)\s+)?Package(?:\s+(?:name|type|level))?[ \t]*:?[ \t]+([^\n]+)/im)?.[1]?.trim();
+  amountCheck('Home QC','All perils deductible',5000,values(b,/^All perils[ \t]+\$\s*([\d,]+)/im));
+  const pkg=(values(b,/^Product[ \t]+(?:Farmers\s+)?Home\s*\(([^)\n]+)\)/im)
+   ||values(b,/^(?:(?:Coverage|Policy)\s+)?Package(?:\s+(?:name|type|level))?[ \t]*:?[ \t]+([^\n]+)/im)
+   ||values(b,/^Farmers\s+Home\s*\(([^)\n]+)\)/im))?.[1]?.trim();
   add('Home QC','Package','Enhanced',pkg,pkg==null?null:/^Enhanced\b/i.test(pkg));
-  amountCheck('Home QC','Personal property',25000,values(b,/^Personal property[ \t]+\$\s*([\d,]+)/im));
-  amountCheck('Home QC','Personal liability',500000,values(b,/^Personal liability[ \t]+\$\s*([\d,]+)/im));
-  amountCheck('Home QC','Medical payments',1000,values(b,/^(?:Guest medical|Medical payments(?: to others)?)[ \t]+\$\s*([\d,]+)/im));
+ }
+ if(blocks.renters){
+  const b=blocks.renters;
+  amountCheck('Renters QC','All perils deductible',1000,values(b,/^All perils[ \t]+\$\s*([\d,]+)/im));
+  amountCheck('Renters QC','Personal property',25000,values(b,/^Personal property[ \t]+\$\s*([\d,]+)/im));
+  amountCheck('Renters QC','Personal liability',500000,values(b,/^Personal liability[ \t]+\$\s*([\d,]+)/im));
+  amountCheck('Renters QC','Medical payments',1000,values(b,/^(?:Guest medical|Medical payments(?: to others)?)[ \t]+\$\s*([\d,]+)/im));
  }
  const status=checks.some(c=>c.state==='fail')?'fail':checks.some(c=>c.state==='review')?'review':'pass';
  return {name,filename,type,checks,status,vehicleCount,quoteIds:[...quoteIds],text:raw};
